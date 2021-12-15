@@ -19,5 +19,29 @@ namespace ContactsApp.Services
             var status = await Permissions.RequestAsync<Permissions.ContactsRead>();
             return status;
         }
+        public async Task<bool> HandleContactsPermission()
+        {
+            var status = await GetContactsPermissionStatusAsync();
+            if (status == PermissionStatus.Granted)
+            {
+                return true;
+            }
+            else if (status == PermissionStatus.Denied)
+            {
+                var requestStatus = await RequestContactsPermissionAsync();
+                if (requestStatus == PermissionStatus.Granted)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                return false;
+            }
+        }
     }
 }

@@ -6,7 +6,6 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Xamarin.Essentials;
 
 namespace ContactsApp.ViewModels
 {
@@ -23,7 +22,7 @@ namespace ContactsApp.ViewModels
 
             Task.Run(async () =>
             {
-                var permissionStatus = await HandleContactsPermission();
+                var permissionStatus = await _permissionService.HandleContactsPermission();
                 if (!permissionStatus)
                     return;
 
@@ -56,30 +55,5 @@ namespace ContactsApp.ViewModels
             }
         }
 
-
-        private async Task<bool> HandleContactsPermission()
-        {
-            var status = await _permissionService.GetContactsPermissionStatusAsync();
-            if (status == PermissionStatus.Granted)
-            {
-                return true;
-            }
-            else if (status == PermissionStatus.Denied)
-            {
-                var requestStatus = await _permissionService.RequestContactsPermissionAsync();
-                if (requestStatus == PermissionStatus.Granted)
-                {
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
-            }
-            else
-            {
-                return false;
-            }
-        }
     }
 }

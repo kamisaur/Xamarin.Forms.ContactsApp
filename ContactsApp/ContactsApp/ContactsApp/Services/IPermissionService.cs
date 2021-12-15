@@ -10,5 +10,6 @@ namespace ContactsApp.Services
     {
         Task<PermissionStatus> GetContactsPermissionStatusAsync();
         Task<PermissionStatus> RequestContactsPermissionAsync();
+        Task<bool> HandleContactsPermission();
     }
 }

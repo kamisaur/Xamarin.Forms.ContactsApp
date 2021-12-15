@@ -6,10 +6,8 @@ using System.Threading.Tasks;
 
 namespace ContactsApp.Services
 {
-    internal interface IContactsRepository
+    internal interface IContactsService
     {
-        Task<IList<ContactModel>> GetContacts();
-
-        void UpsertContacts(IList<ContactModel> contacts);
+        Task<List<ContactModel>> GetAllContactsAsync();
     }
 }

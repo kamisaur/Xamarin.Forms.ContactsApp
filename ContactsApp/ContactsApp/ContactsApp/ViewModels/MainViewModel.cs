@@ -5,14 +5,45 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
+using Xamarin.Essentials;
 
 namespace ContactsApp.ViewModels
 {
     internal class MainViewModel : BaseViewModel
     {
         private readonly IContactsRepository _contactsRepo;
+        private readonly IPermissionService _permissionService;
 
-        public ObservableCollection<ContactItemViewModel> Contacts { get; set; }
+        public MainViewModel(IContactsRepository contactsRepo, IPermissionService permissionService)
+        {
+            _contactsRepo = contactsRepo;
+            _permissionService = permissionService;
+
+
+            Task.Run(async () =>
+            {
+                var permissionStatus = await HandleContactsPermission();
+                if (!permissionStatus)
+                    return;
+
+                var contactModels = await _contactsRepo.GetContacts();
+                var contactIvms = contactModels.Select(x => new ContactItemViewModel(x));
+
+                Contacts = new ObservableCollection<ContactItemViewModel>(contactIvms);
+            });
+        }
+
+        private ObservableCollection<ContactItemViewModel> _contacts;
+        public ObservableCollection<ContactItemViewModel> Contacts
+        {
+            get => _contacts;
+            set
+            {
+                _contacts = value;
+                OnPropertyChanged();
+            }
+        }
 
         private DateTime _lastSyncDate;
         public DateTime LastSyncDate
@@ -25,14 +56,30 @@ namespace ContactsApp.ViewModels
             }
         }
 
-        public MainViewModel(IContactsRepository contactsRepo)
+
+        private async Task<bool> HandleContactsPermission()
         {
-            _contactsRepo = contactsRepo;
-
-            var contactModels = contactsRepo.GetContacts();
-            var contactIvms = contactModels.Select(x => new ContactItemViewModel(x));
-
-            Contacts = new ObservableCollection<ContactItemViewModel>(contactIvms);
+            var status = await _permissionService.GetContactsPermissionStatusAsync();
+            if (status == PermissionStatus.Granted)
+            {
+                return true;
+            }
+            else if (status == PermissionStatus.Denied)
+            {
+                var requestStatus = await _permissionService.RequestContactsPermissionAsync();
+                if (requestStatus == PermissionStatus.Granted)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                return false;
+            }
         }
     }
 }

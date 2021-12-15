@@ -34,5 +34,7 @@
     <string>ContactsApp</string>
     <key>XSAppIconAssets</key>
     <string>Assets.xcassets/AppIcon.appiconset</string>
+	<key>NSContactsUsageDescription</key>
+	<string>This app needs access to contacts to pick a contact and get info.</string>
 </dict>
 </plist>

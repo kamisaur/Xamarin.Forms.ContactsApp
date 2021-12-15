@@ -2,11 +2,13 @@
 <ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              Title="Contacts"
+             xmlns:vms="clr-namespace:ContactsApp.ViewModels"
+             xmlns:itemVms="clr-namespace:ContactsApp.ItemViewModels"
              x:Class="ContactsApp.MainPage">
 
     <ContentPage.Resources>
 
-        <DataTemplate x:Key="listItemTemplate">
+        <DataTemplate x:Key="listItemTemplate" x:DataType="itemVms:ContactItemViewModel">
             <Grid>
                 <Frame
                     CornerRadius="14"
@@ -29,19 +31,23 @@
                                 VerticalOptions="Center"
                                 Text="👤"
                                 FontSize="20"/>
-
                         </Grid>
 
 
                         <!--Name-->
-                        <Label 
-                            Text="{Binding .}"
-                            Grid.Column="1"
-                            Grid.Row="0"/>
+                        <Label Grid.Column="1" Grid.Row="0">
+                            <Label.FormattedText>
+                                <FormattedString>
+                                    <Span Text="{Binding FirstName}"/>
+                                    <Span Text=" "/>
+                                    <Span Text="{Binding LastName}"/>
+                                </FormattedString>
+                            </Label.FormattedText>
+                        </Label>
 
                         <!--Phone Number-->
                         <Label 
-                            Text="{Binding .}"
+                            Text="{Binding PhoneNumber}"
                             Grid.Column="1"
                             Grid.Row="1"/>
 
@@ -50,22 +56,9 @@
             </Grid>
         </DataTemplate>
         
-        <x:Array x:Key="dummyData" Type="{x:Type x:String}">
-            <x:String>mono</x:String>
-            <x:String>monodroid</x:String>
-            <x:String>monotouch</x:String>
-            <x:String>monorail</x:String>
-            <x:String>monodevelop</x:String>
-            <x:String>monotone</x:String>
-            <x:String>monopoly</x:String>
-            <x:String>monomodal</x:String>
-            <x:String>mononucleosis</x:String>
-        </x:Array>
-
-
     </ContentPage.Resources>
 
-    <Grid RowDefinitions="auto, *">
+    <Grid RowDefinitions="auto, *" x:DataType="vms:MainViewModel">
         <!--#region Sync Info-->
         <StackLayout 
             Orientation="Horizontal"
@@ -85,7 +78,7 @@
         <!--#region Listing-->
         <CollectionView
             Grid.Row="1" 
-            ItemsSource="{StaticResource dummyData}"
+            ItemsSource="{Binding Contacts}"
             ItemTemplate="{StaticResource listItemTemplate}">
         </CollectionView>
         <!--#endregion-->

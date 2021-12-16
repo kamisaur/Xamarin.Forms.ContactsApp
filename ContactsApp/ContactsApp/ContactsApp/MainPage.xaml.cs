@@ -20,7 +20,8 @@ namespace ContactsApp
 
             var permissionService = new PermissionService();
             var contactsService = new ContactsService();
-            var contactsRepo = new ContactsRepository(contactsService);
+            var databaseService = new DatabaseService();
+            var contactsRepo = new ContactsRepository(contactsService, databaseService);
             BindingContext = new MainViewModel(contactsRepo, permissionService);
         }
 

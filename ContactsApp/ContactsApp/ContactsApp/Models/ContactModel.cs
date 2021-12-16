@@ -1,11 +1,13 @@
-﻿using System;
+﻿using SQLite;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace ContactsApp.Models
 {
-    internal class ContactModel
+    public class ContactModel
     {
+        [PrimaryKey]
         public string Id { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
@@ -21,6 +23,10 @@ namespace ContactsApp.Models
             FirstName = firstName;
             LastName = lastName;
             PhoneNumber = phoneNumber;
+        }
+
+        public ContactModel()
+        {
         }
     }
 }

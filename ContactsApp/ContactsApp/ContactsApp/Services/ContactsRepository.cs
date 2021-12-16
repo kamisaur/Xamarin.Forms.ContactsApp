@@ -10,31 +10,32 @@ namespace ContactsApp.Services
     public class ContactsRepository : IContactsRepository
     {
         private readonly IContactsService _contactsService;
+        private readonly IDatabaseService _databaseService;
 
-        public ContactsRepository(IContactsService contactsService)
+        public ContactsRepository(IContactsService contactsService, IDatabaseService databaseService)
         {
             _contactsService = contactsService;
+            _databaseService = databaseService;
         }
 
-        public async Task<IList<ContactModel>> GetContacts()
+        public Task<List<ContactModel>> GetContacts()
         {
-            var contacts = await _contactsService.GetAllContactsAsync();
+            var contacts = _databaseService.GetContactsAsync();
             return contacts;
-
-            //var contacts = new List<ContactModel>
-            //{
-            //    new ContactModel(0, "Jack", "Nicholson", "123123123"),
-            //    new ContactModel(1, "Johnny", "Depp", "222333111"),
-            //    new ContactModel(2, "Armand", "Third", "999888777"),
-            //    new ContactModel(3, "Clint", "Eastwood", "777111777"),
-            //    new ContactModel(4, "Will", "Smith", "666111666"),
-            //};
-
-            //return contacts;
         }
 
-        public void UpsertContacts(IList<ContactModel> contacts)
+        public async Task<List<ContactModel>> SyncContacts()
         {
+            await DeleteAllContactsAsync();
+            var contacts = await _contactsService.GetAllContactsAsync();
+            await _databaseService.UpsertContactsAsync(contacts);
+
+            return contacts;
+        }
+
+        public Task DeleteAllContactsAsync()
+        {
+             return _databaseService.DeleteAllContactsAsync();
         }
     }
 }

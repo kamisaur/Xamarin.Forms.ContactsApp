@@ -6,6 +6,8 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Input;
+using Xamarin.Forms;
 
 namespace ContactsApp.ViewModels
 {
@@ -14,25 +16,6 @@ namespace ContactsApp.ViewModels
         private readonly IContactsRepository _contactsRepo;
         private readonly IPermissionService _permissionService;
 
-        public MainViewModel(IContactsRepository contactsRepo, IPermissionService permissionService)
-        {
-            _contactsRepo = contactsRepo;
-            _permissionService = permissionService;
-
-
-            Task.Run(async () =>
-            {
-                var permissionStatus = await _permissionService.HandleContactsPermission();
-                if (!permissionStatus)
-                    return;
-
-                var contactModels = await _contactsRepo.GetContacts();
-                var contactIvms = contactModels.Select(x => new ContactItemViewModel(x));
-
-                Contacts = new ObservableCollection<ContactItemViewModel>(contactIvms);
-            });
-        }
-
         private ObservableCollection<ContactItemViewModel> _contacts;
         public ObservableCollection<ContactItemViewModel> Contacts
         {
@@ -40,6 +23,28 @@ namespace ContactsApp.ViewModels
             set
             {
                 _contacts = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private ICommand _clearCacheCommand;
+        public ICommand ClearCacheCommand
+        {
+            get => _clearCacheCommand;
+            set
+            {
+                _clearCacheCommand = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private ICommand _syncContactsCommand;
+        public ICommand SyncContactsCommand
+        {
+            get => _syncContactsCommand;
+            set
+            {
+                _syncContactsCommand = value;
                 OnPropertyChanged();
             }
         }
@@ -55,5 +60,73 @@ namespace ContactsApp.ViewModels
             }
         }
 
+        private bool _isLoading;
+        public bool IsLoading
+        {
+            get => _isLoading;
+            set
+            {
+                _isLoading = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public MainViewModel(IContactsRepository contactsRepo, IPermissionService permissionService)
+        {
+            _contactsRepo = contactsRepo;
+            _permissionService = permissionService;
+
+            SyncContactsCommand = new Command(() => SyncContatctsAsync());
+            ClearCacheCommand = new Command(() => ClearCacheAsync());
+
+            Task.Run(async () =>
+            {
+                IsLoading = true;
+
+                var permissionStatus = await _permissionService.HandleContactsPermission();
+                if (!permissionStatus)
+                    return;
+
+                var contactModels = await _contactsRepo.GetContacts();
+                var contactIvms = contactModels.Select(x => new ContactItemViewModel(x));
+
+                if (contactIvms.Any())
+                {
+                    Contacts = new ObservableCollection<ContactItemViewModel>(contactIvms);
+                }
+
+                IsLoading = false;
+            });
+        }
+
+        public void SyncContatctsAsync()
+        {
+            Task.Run(async () =>
+            {
+                IsLoading = true;
+
+                var contacts = await _contactsRepo.SyncContacts();
+                var contactIvms = contacts.Select(x => new ContactItemViewModel(x));
+                if (contactIvms.Any())
+                {
+                    Contacts = new ObservableCollection<ContactItemViewModel>(contactIvms);
+                }
+
+                IsLoading = false;
+            });
+        }
+
+        public void ClearCacheAsync()
+        {
+            Task.Run(async () =>
+            {
+                IsLoading = true;
+
+                Contacts.Clear();
+                await _contactsRepo.DeleteAllContactsAsync();
+
+                IsLoading = false;
+            });
+        }
     }
 }

@@ -6,10 +6,12 @@ using System.Threading.Tasks;
 
 namespace ContactsApp.Services
 {
-    internal interface IContactsRepository
+    public interface IContactsRepository
     {
-        Task<IList<ContactModel>> GetContacts();
+        Task<List<ContactModel>> GetContacts();
 
-        void UpsertContacts(IList<ContactModel> contacts);
+        Task<List<ContactModel>> SyncContacts();
+
+        Task DeleteAllContactsAsync();
     }
 }

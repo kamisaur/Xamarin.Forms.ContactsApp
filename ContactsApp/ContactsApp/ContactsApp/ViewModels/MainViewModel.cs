@@ -1,5 +1,6 @@
 ﻿using ContactsApp.ItemViewModels;
 using ContactsApp.Services;
+using ContactsApp.Utils;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -71,6 +72,17 @@ namespace ContactsApp.ViewModels
             }
         }
 
+        private ViewModelState _currentState;
+        public ViewModelState CurrentState
+        {
+            get => _currentState;
+            set
+            {
+                _currentState = value;
+                OnPropertyChanged();
+            }
+        }
+
         public MainViewModel(IContactsRepository contactsRepo, IPermissionService permissionService)
         {
             _contactsRepo = contactsRepo;
@@ -82,10 +94,14 @@ namespace ContactsApp.ViewModels
             Task.Run(async () =>
             {
                 IsLoading = true;
+                CurrentState = ViewModelState.Loading;
 
                 var permissionStatus = await _permissionService.HandleContactsPermission();
                 if (!permissionStatus)
+                {
+                    CurrentState = ViewModelState.PermissionDenied;
                     return;
+                }
 
                 var contactModels = await _contactsRepo.GetContacts();
                 var contactIvms = contactModels.Select(x => new ContactItemViewModel(x));
@@ -93,6 +109,11 @@ namespace ContactsApp.ViewModels
                 if (contactIvms.Any())
                 {
                     Contacts = new ObservableCollection<ContactItemViewModel>(contactIvms);
+                    CurrentState = ViewModelState.Normal;
+                }
+                else
+                {
+                    CurrentState = ViewModelState.Empty;
                 }
 
                 IsLoading = false;
@@ -104,6 +125,7 @@ namespace ContactsApp.ViewModels
             Task.Run(async () =>
             {
                 IsLoading = true;
+                CurrentState = ViewModelState.Loading;
 
                 var contacts = await _contactsRepo.SyncContacts();
                 var contactIvms = contacts.Select(x => new ContactItemViewModel(x));
@@ -113,6 +135,7 @@ namespace ContactsApp.ViewModels
                 }
 
                 IsLoading = false;
+                CurrentState = ViewModelState.Normal;
             });
         }
 
@@ -121,11 +144,13 @@ namespace ContactsApp.ViewModels
             Task.Run(async () =>
             {
                 IsLoading = true;
+                CurrentState = ViewModelState.Loading;
 
                 Contacts.Clear();
                 await _contactsRepo.DeleteAllContactsAsync();
 
                 IsLoading = false;
+                CurrentState = ViewModelState.Empty;
             });
         }
     }

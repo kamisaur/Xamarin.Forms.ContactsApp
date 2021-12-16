@@ -68,7 +68,8 @@
                 </Frame>
             </Grid>
         </DataTemplate>
-
+        
+        <!--#region EmptyView-->
         <Grid x:Key="emptyView">
             <StackLayout VerticalOptions="Center" HorizontalOptions="Center">
 
@@ -136,51 +137,118 @@
                 <Button 
                     BackgroundColor="#2196F3"
                     CornerRadius="22"
-                    Text="Sync"
+                    Text="Sync Contacts"
                     Margin="70,16"
                     TextColor="White"
                     VerticalOptions="Center"
                     Command="{Binding SyncContactsCommand}"/>
                 <!--#endregion-->
 
-                <ActivityIndicator 
-                    Color="#2196F3"
-                    IsVisible="true" 
-                    IsRunning="{Binding IsLoading}" 
-                    HeightRequest="28"/>
-
             </StackLayout>
         </Grid>
+        <!--#endregion-->
 
-    </ContentPage.Resources>
-
-    <Grid RowDefinitions="auto, *" RowSpacing="0">
-        <!--#region Sync Info-->
-        <StackLayout 
+        <!--#region MainView-->
+        <Grid
+            x:Key="mainView"
+            RowDefinitions="auto, *"
+            RowSpacing="0">
+            <!--#region Sync Info-->
+            <StackLayout 
             Spacing="0"
             Orientation="Horizontal"
             BackgroundColor="Tomato" 
             Padding="16">
-            <Label 
+                <Label 
                 Text="Sync Info" 
                 VerticalOptions="Center"
                 HorizontalOptions="FillAndExpand"/>
-            <ActivityIndicator 
+                <ActivityIndicator 
                 Color="White"
                 IsVisible="true" 
                 IsRunning="{Binding IsLoading}" 
                 HeightRequest="28"/>
+            </StackLayout>
+            <!--#endregion-->
+
+            <!--#region Listing-->
+            <CollectionView
+            Grid.Row="1" 
+            ItemsSource="{Binding Contacts}"
+            ItemTemplate="{StaticResource listItemTemplate}">
+            </CollectionView>
+            <!--#endregion-->
+        </Grid>
+        <!--#endregion-->
+
+        <!--#region LoadingView-->
+        <StackLayout 
+            x:Key="loadingView" 
+            Margin="20"
+            VerticalOptions="Center"
+            HorizontalOptions="Center">
+            
+            <ActivityIndicator 
+                Color="#2196F3"
+                IsVisible="true" 
+                IsRunning="True" 
+                WidthRequest="140"
+                HeightRequest="140"/>
+
+
+            <Label 
+                Text=""
+                FontSize="22"
+                FontAttributes="Bold"
+                TextColor="Black"
+                HorizontalOptions="Center"
+                VerticalOptions="Center"/>
+
+            <!-- #region Text-->
+            <Label 
+                Text="Loading..."
+                FontSize="22"
+                FontAttributes="Bold"
+                TextColor="Black"
+                HorizontalOptions="Center"
+                VerticalOptions="Center"/>
+
+            <Label 
+                Text="Please wait while contacts are being imported. It might take a moment."
+                FontSize="16"
+                TextColor="Gray"
+                HorizontalTextAlignment="Center"
+                HorizontalOptions="Center"
+                VerticalOptions="Center"/>
+            <!--#endregion-->
+
         </StackLayout>
         <!--#endregion-->
         
-        <!--#region Listing-->
-        <CollectionView
-            Grid.Row="1" 
-            EmptyView="{StaticResource emptyView}"
-            ItemsSource="{Binding Contacts}"
-            ItemTemplate="{StaticResource listItemTemplate}">
-        </CollectionView>
-        <!--#endregion-->
-    </Grid>
+    </ContentPage.Resources>
+
+    <ContentView>
+        <ContentView.Triggers>
+            <DataTrigger 
+                TargetType="ContentView"
+                Binding="{Binding CurrentState}"
+                Value="Normal">
+                <Setter Property="Content" Value="{StaticResource mainView}"/>
+            </DataTrigger>
+            <DataTrigger 
+                TargetType="ContentView"
+                Binding="{Binding CurrentState}"
+                Value="Loading">
+                <Setter Property="Content" Value="{StaticResource loadingView}"/>
+            </DataTrigger>
+            <DataTrigger 
+                TargetType="ContentView"
+                Binding="{Binding CurrentState}"
+                Value="Empty">
+                <!--<Setter Property="Content" Value="{StaticResource loadingView}"/>-->
+                <Setter Property="Content" Value="{StaticResource emptyView}"/>
+            </DataTrigger>
+        </ContentView.Triggers>
+    </ContentView>
 
 </ContentPage>

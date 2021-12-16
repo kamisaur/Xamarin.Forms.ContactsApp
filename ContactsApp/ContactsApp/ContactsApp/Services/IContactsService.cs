@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ContactsApp.Services
 {
-    internal interface IContactsService
+    public interface IContactsService
     {
         Task<List<ContactModel>> GetAllContactsAsync();
     }

@@ -8,7 +8,7 @@ using Xamarin.Essentials;
 
 namespace ContactsApp.Services
 {
-    internal class ContactsService : IContactsService
+    public class ContactsService : IContactsService
     {
         public async Task<List<ContactModel>> GetAllContactsAsync()
         {

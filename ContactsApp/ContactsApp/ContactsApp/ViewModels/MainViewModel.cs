@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace ContactsApp.ViewModels
 {
-    internal class MainViewModel : BaseViewModel
+    public class MainViewModel : BaseViewModel
     {
         private readonly IContactsRepository _contactsRepo;
         private readonly IPermissionService _permissionService;

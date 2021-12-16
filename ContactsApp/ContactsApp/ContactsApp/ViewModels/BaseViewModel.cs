@@ -6,7 +6,7 @@ using System.Text;
 
 namespace ContactsApp.ViewModels
 {
-    internal class BaseViewModel : INotifyPropertyChanged
+	public class BaseViewModel : INotifyPropertyChanged
     {
         /// <summary>
         /// Occurs when property changed.

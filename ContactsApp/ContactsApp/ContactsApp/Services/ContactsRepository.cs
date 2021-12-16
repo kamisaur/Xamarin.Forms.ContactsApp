@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace ContactsApp.Services
 {
-    internal class ContactsRepository : IContactsRepository
+    public class ContactsRepository : IContactsRepository
     {
         private readonly IContactsService _contactsService;
 

@@ -6,7 +6,7 @@ using Xamarin.Essentials;
 
 namespace ContactsApp.Services
 {
-    internal class PermissionService : IPermissionService
+    public class PermissionService : IPermissionService
     {
         public async  Task<PermissionStatus> GetContactsPermissionStatusAsync()
         {

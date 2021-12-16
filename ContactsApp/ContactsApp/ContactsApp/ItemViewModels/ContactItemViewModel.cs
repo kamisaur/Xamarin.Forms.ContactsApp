@@ -6,7 +6,7 @@ using System.Text;
 
 namespace ContactsApp.ItemViewModels
 {
-    internal class ContactItemViewModel : BaseViewModel
+    public class ContactItemViewModel : BaseViewModel
     {
         public string Id { get; set; }
         public string FirstName { get; set; }

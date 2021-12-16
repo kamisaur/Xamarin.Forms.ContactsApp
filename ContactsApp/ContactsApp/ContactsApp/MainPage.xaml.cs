@@ -24,7 +24,7 @@ namespace ContactsApp
             BindingContext = new MainViewModel(contactsRepo, permissionService);
         }
 
-        protected async override void OnAppearing()
+        protected override void OnAppearing()
         {
             base.OnAppearing();
         }

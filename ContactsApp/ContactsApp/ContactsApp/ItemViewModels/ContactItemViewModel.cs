@@ -9,7 +9,6 @@ namespace ContactsApp.ItemViewModels
     internal class ContactItemViewModel : BaseViewModel
     {
         public string Id { get; set; }
-        public string DisplayName { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string PhoneNumber { get; set; }
@@ -29,7 +28,6 @@ namespace ContactsApp.ItemViewModels
         public ContactItemViewModel(ContactModel contact)
         {
             Id = contact.Id;
-            DisplayName = contact.DisplayName;
             FirstName = contact.FirstName;
             LastName = contact.LastName;
             PhoneNumber = contact.PhoneNumber;

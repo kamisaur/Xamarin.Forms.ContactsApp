@@ -23,7 +23,6 @@ namespace ContactsApp.Services
                     var phoneNumber = GetPhoneNumber(contact.Phones);
                     contactModels.Add(new ContactModel(
                         contact.Id,
-                        contact.DisplayName,
                         contact.GivenName,
                         contact.FamilyName,
                         phoneNumber));

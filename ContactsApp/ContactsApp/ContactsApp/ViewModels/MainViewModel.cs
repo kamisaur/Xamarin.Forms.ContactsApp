@@ -138,7 +138,7 @@ namespace ContactsApp.ViewModels
      
         private void InitCommands()
         {
-            SyncContactsCommand = new Command(() => SyncContatctsAsync());
+            SyncContactsCommand = new Command(() => SyncContatcts());
             ClearCacheCommand = new Command(() => ClearCacheAsync());
             RequestPermissionCommand = new Command(() => RequestPermission());
             GoBackToContactsCommand = new Command(() => GoBackToContacts());
@@ -155,10 +155,11 @@ namespace ContactsApp.ViewModels
             _dialogService = dialogService;
 
             InitCommands();
-            RunInBackground(async () => await InitializeData());
+            RunInBackground(async () => await InitializeSyncInfo());
+            RunInBackground(async () => await InitializeContacts());
         }
 
-        private async Task InitializeData()
+        private async Task InitializeSyncInfo()
         {
             var syncInfo = await _contactsRepo.GetSyncInfo();
             if (syncInfo != null)
@@ -172,9 +173,14 @@ namespace ContactsApp.ViewModels
                     LastSyncDateString = syncInfo.SyncDateTime.ToString(dateTimeFormat);
                 }
             }
+        }
 
+        private async Task InitializeContacts()
+        {
             var contactModels = await _contactsRepo.GetContacts();
-            var contactIvms = contactModels.Select(x => new ContactItemViewModel(x));
+            var contactIvms = contactModels
+                .Select(x => new ContactItemViewModel(x))
+                .OrderBy(x => x.FirstName);
 
             if (contactIvms.Any())
             {
@@ -186,10 +192,9 @@ namespace ContactsApp.ViewModels
             }
 
             CurrentSyncState = SyncState.Completed;
-
         }
 
-        private async void SyncContatctsAsync()
+        private async void SyncContatcts()
         {
             if (IsBusy)
                 return;
@@ -217,23 +222,32 @@ namespace ContactsApp.ViewModels
                 return;
             }
            
-            await RunInBackground(async () =>
+            await RunInBackground(async () => await UpdateContacts());
+            await RunInBackground(async () => await UpdateSyncInfo());
+
+            IsBusy = false;
+        }
+
+        private async Task UpdateContacts()
+        {
+            var contacts = await _contactsRepo.SyncContacts();
+            var contactIvms = contacts
+                .Select(x => new ContactItemViewModel(x))
+                .OrderBy(x => x.FirstName);
+
+            if (contactIvms.Any())
             {
-                var contacts = await _contactsRepo.SyncContacts();
+                Contacts = new ObservableCollection<ContactItemViewModel>(contactIvms);
+            }
 
-                var newSync = DateTime.Now;
-                await _contactsRepo.SaveSyncInfoAsync(new SyncInfoModel(newSync));
-                LastSyncDateString = newSync.ToString(dateTimeFormat);
+            CurrentSyncState = SyncState.Completed;
+        }
 
-                var contactIvms = contacts.Select(x => new ContactItemViewModel(x));
-                if (contactIvms.Any())
-                {
-                    Contacts = new ObservableCollection<ContactItemViewModel>(contactIvms);
-                }
-                    
-                CurrentSyncState = SyncState.Completed;
-                IsBusy = false;
-            });
+        private async Task UpdateSyncInfo()
+        {
+            var newSync = DateTime.Now;
+            await _contactsRepo.SaveSyncInfoAsync(new SyncInfoModel(newSync));
+            LastSyncDateString = newSync.ToString(dateTimeFormat);
         }
 
         private void ClearCacheAsync()
@@ -253,7 +267,7 @@ namespace ContactsApp.ViewModels
             var permissionStatus = await _permissionService.RequestContactsPermissionAsync();
             if(permissionStatus == PermissionStatus.Granted)
             {
-                SyncContatctsAsync();
+                SyncContatcts();
             }
             else
             {
@@ -300,6 +314,7 @@ namespace ContactsApp.ViewModels
                 finally
                 {
                     CurrentState = ViewModelState.Normal;
+                    IsBusy = false;
                 }
             }, CancellationToken.None, TaskCreationOptions.None, TaskScheduler.Current);
         }

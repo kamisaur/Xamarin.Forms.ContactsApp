@@ -4,10 +4,10 @@ using System.Text;
 
 namespace ContactsApp.Utils
 {
-    public enum ViewModelState
+    public enum SyncState
     {
-        Normal,
-        Empty,
-        PermissionDenied,
+        Completed,
+        Error,
+        Loading,
     }
 }

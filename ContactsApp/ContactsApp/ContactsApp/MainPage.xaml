@@ -19,6 +19,11 @@
             Command="{Binding SyncContactsCommand}"
             Order="Secondary"
             Text="Sync Contacts" />
+
+        <ToolbarItem
+            Command="{Binding ErrorCommand}"
+            Order="Secondary"
+            Text="Error" />
     </ContentPage.ToolbarItems>
 
     <ContentPage.Resources>
@@ -93,6 +98,124 @@
             </Grid>
         </DataTemplate>
 
+        <!--#region SyncComletedView-->
+        <StackLayout
+            x:Key="syncComletedView"
+            Padding="16"
+            BackgroundColor="LightGreen"
+            Orientation="Horizontal"
+            Spacing="0">
+
+            <StackLayout
+                HorizontalOptions="FillAndExpand"
+                Orientation="Vertical"
+                Spacing="0">
+
+                <Label
+                    Text="✅ Sync Completed"
+                    TextColor="White"
+                    VerticalOptions="Center" />
+
+                <Label
+                    HorizontalOptions="FillAndExpand"
+                    TextColor="White"
+                    VerticalOptions="Center">
+                    <Label.FormattedText>
+                        <FormattedString>
+                            <Span Text="Last sync: " />
+                            <Span Text="{Binding LastSyncDateString}" />
+                        </FormattedString>
+                    </Label.FormattedText>
+                </Label>
+            </StackLayout>
+
+            <Button
+                Padding="8"
+                BackgroundColor="Transparent"
+                BorderColor="White"
+                BorderWidth="2"
+                Command="{Binding SyncContactsCommand}"
+                CornerRadius="16"
+                HorizontalOptions="Center"
+                Text="Sync"
+                TextColor="White" />
+
+        </StackLayout>
+        <!--#endregion-->
+
+        <!--#region SyncErrorView-->
+        <StackLayout
+            x:Key="syncErrorView"
+            Padding="16"
+            BackgroundColor="Tomato"
+            Orientation="Horizontal"
+            Spacing="0">
+
+            <StackLayout
+                HorizontalOptions="FillAndExpand"
+                Orientation="Vertical"
+                Spacing="0">
+
+                <Label
+                    Text="❌ There was an error."
+                    TextColor="White"
+                    VerticalOptions="Center" />
+
+                <Label
+                    HorizontalOptions="FillAndExpand"
+                    Text="Please Try Again"
+                    TextColor="White"
+                    VerticalOptions="Center" />
+            </StackLayout>
+
+
+            <Button
+                Padding="14,8"
+                BackgroundColor="Transparent"
+                BorderColor="White"
+                BorderWidth="2"
+                Command="{Binding SyncContactsCommand}"
+                CornerRadius="16"
+                Text="Try Again"
+                TextColor="White" />
+
+        </StackLayout>
+        <!--#endregion-->
+
+        <!--#region SyncLoadingView-->
+        <StackLayout
+            x:Key="syncLoadingView"
+            Padding="16"
+            BackgroundColor="DarkGray"
+            Orientation="Horizontal"
+            Spacing="0">
+
+            <StackLayout
+                HorizontalOptions="FillAndExpand"
+                Orientation="Vertical"
+                Spacing="0">
+
+                <Label
+                    Text="Loaading..."
+                    TextColor="White"
+                    VerticalOptions="Center" />
+
+                <Label
+                    HorizontalOptions="FillAndExpand"
+                    Text="It might take a moment."
+                    TextColor="White"
+                    VerticalOptions="Center" />
+            </StackLayout>
+
+            <ActivityIndicator
+                HeightRequest="28"
+                IsRunning="True"
+                IsVisible="true"
+                Color="White" />
+
+        </StackLayout>
+        <!--#endregion-->
+
         <!--#region EmptyView-->
         <Grid x:Key="emptyView">
             <StackLayout HorizontalOptions="Center" VerticalOptions="Center">
@@ -146,41 +269,28 @@
             RowDefinitions="auto, *"
             RowSpacing="0">
             <!--#region Sync Info-->
-            <StackLayout
-                Padding="16"
-                BackgroundColor="LightGreen"
-                Orientation="Horizontal"
-                Spacing="0">
-
-                <StackLayout
-                    HorizontalOptions="FillAndExpand"
-                    Orientation="Vertical"
-                    Spacing="0">
-
-                    <Label
-                        Text="✅ Sync Successful"
-                        TextColor="White"
-                        VerticalOptions="Center" />
-
-                    <Label
-                        HorizontalOptions="FillAndExpand"
-                        TextColor="White"
-                        VerticalOptions="Center">
-                        <Label.FormattedText>
-                            <FormattedString>
-                                <Span Text="Last sync: " />
-                                <Span Text="{Binding LastSyncDateString}" />
-                            </FormattedString>
-                        </Label.FormattedText>
-                    </Label>
-                </StackLayout>
-
-                <ActivityIndicator
-                    HeightRequest="28"
-                    IsRunning="{Binding IsLoading}"
-                    IsVisible="true"
-                    Color="White" />
-            </StackLayout>
+            <ContentView>
+                <ContentView.Triggers>
+                    <DataTrigger
+                        Binding="{Binding CurrentSyncState}"
+                        TargetType="ContentView"
+                        Value="Loading">
+                        <Setter Property="Content" Value="{StaticResource syncLoadingView}" />
+                    </DataTrigger>
+                    <DataTrigger
+                        Binding="{Binding CurrentSyncState}"
+                        TargetType="ContentView"
+                        Value="Completed">
+                        <Setter Property="Content" Value="{StaticResource syncComletedView}" />
+                    </DataTrigger>
+                    <DataTrigger
+                        Binding="{Binding CurrentSyncState}"
+                        TargetType="ContentView"
+                        Value="Error">
+                        <Setter Property="Content" Value="{StaticResource syncErrorView}" />
+                    </DataTrigger>
+                </ContentView.Triggers>
+            </ContentView>
             <!--#endregion-->
 
             <!--#region Listing-->

@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Xamarin.Essentials;
@@ -77,6 +78,17 @@ namespace ContactsApp.ViewModels
             }
         }
 
+        private ICommand _errorCommande;
+        public ICommand ErrorCommand
+        {
+            get => _errorCommande;
+            set
+            {
+                _errorCommande = value;
+                OnPropertyChanged();
+            }
+        }
+
         private string _lastSyncDateString;
         public string LastSyncDateString
         {
@@ -84,17 +96,6 @@ namespace ContactsApp.ViewModels
             set
             {
                 _lastSyncDateString = value;
-                OnPropertyChanged();
-            }
-        }
-
-        private bool _isLoading;
-        public bool IsLoading
-        {
-            get => _isLoading;
-            set
-            {
-                _isLoading = value;
                 OnPropertyChanged();
             }
         }
@@ -110,6 +111,37 @@ namespace ContactsApp.ViewModels
             }
         }
 
+        private SyncState _currentSyncState;
+        public SyncState CurrentSyncState
+        {
+            get => _currentSyncState;
+            set
+            {
+                _currentSyncState = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private bool _isBusy;
+        public bool IsBusy
+        {
+            get => _isBusy;
+            set
+            {
+                _isBusy = value;
+                OnPropertyChanged();
+            }
+        }
+     
+        private void InitCommands()
+        {
+            SyncContactsCommand = new Command(() => SyncContatctsAsync());
+            ClearCacheCommand = new Command(() => ClearCacheAsync());
+            RequestPermissionCommand = new Command(() => RequestPermission());
+            GoBackToContactsCommand = new Command(() => GoBackToContacts());
+            ErrorCommand = new Command(() => HandleErrorState());
+        }
+
         public MainViewModel(
             IContactsRepository contactsRepo,
             IPermissionService permissionService,
@@ -119,20 +151,24 @@ namespace ContactsApp.ViewModels
             _permissionService = permissionService;
             _dialogService = dialogService;
 
-            SyncContactsCommand = new Command(() => SyncContatctsAsync());
-            ClearCacheCommand = new Command(() => ClearCacheAsync());
-            RequestPermissionCommand = new Command(() => RequestPermission());
-            GoBackToContactsCommand = new Command(() => GoBackToContacts());
+            InitCommands();
 
             Task.Run(async () =>
             {
                 CurrentState = ViewModelState.Normal;
-                IsLoading = true;
+                CurrentSyncState = SyncState.Loading;
 
                 var syncInfo = await _contactsRepo.GetSyncInfo();
                 if(syncInfo != null)
                 {
-                    LastSyncDateString = syncInfo.SyncDateTime.ToString(dateTimeFormat);
+                    if(syncInfo.SyncDateTime == DateTime.MinValue)
+                    {
+                        LastSyncDateString = "N/A";
+                    }
+                    else
+                    {
+                        LastSyncDateString = syncInfo.SyncDateTime.ToString(dateTimeFormat);
+                    }
                 }
 
                 var contactModels = await _contactsRepo.GetContacts();
@@ -147,12 +183,17 @@ namespace ContactsApp.ViewModels
                     CurrentState = ViewModelState.Empty;
                 }
 
-                IsLoading = false;
+                CurrentSyncState = SyncState.Completed;
             });
         }
 
         public async void SyncContatctsAsync()
         {
+            if (IsBusy)
+                return;
+
+            IsBusy = true;
+
             var dialogResult = await _dialogService.DisplayPromptAsync(
                 "Contacts",
                 "Are you sure you want to import contacts?",
@@ -161,19 +202,21 @@ namespace ContactsApp.ViewModels
 
             if (!dialogResult)
             {
+                IsBusy = false;
                 return;
             }
 
             await Task.Run(async () =>
             {
-                IsLoading = true;
+                CurrentSyncState = SyncState.Loading;
                 CurrentState = ViewModelState.Normal;
 
                 var permissionStatus = await _permissionService.GetContactsPermissionStatusAsync();
                 if (permissionStatus != PermissionStatus.Granted)
                 {
                     CurrentState = ViewModelState.PermissionDenied;
-                    IsLoading = false;
+                    CurrentSyncState = SyncState.Completed;
+                    IsBusy = false;
                     return;
                 }
 
@@ -188,8 +231,9 @@ namespace ContactsApp.ViewModels
                 {
                     Contacts = new ObservableCollection<ContactItemViewModel>(contactIvms);
                 }
-
-                IsLoading = false;
+                    
+                CurrentSyncState = SyncState.Completed;
+                IsBusy = false;
             });
         }
 
@@ -197,13 +241,13 @@ namespace ContactsApp.ViewModels
         {
             Task.Run(async () =>
             {
-                IsLoading = true;
+                CurrentSyncState = SyncState.Loading;
                 CurrentState = ViewModelState.Normal;
 
                 Contacts.Clear();
                 await _contactsRepo.DeleteAllContactsAsync();
 
-                IsLoading = false;
+                CurrentSyncState = SyncState.Completed;
                 CurrentState = ViewModelState.Empty;
             });
         }
@@ -232,5 +276,33 @@ namespace ContactsApp.ViewModels
                 CurrentState = ViewModelState.Empty;
             }
         }
+
+        public void HandleErrorState()
+        {
+            CurrentState = ViewModelState.Normal;
+            CurrentSyncState = SyncState.Error;
+        }
+
+        public Task RunInBackground(Action action)
+        {
+            return Task.Factory.StartNew(() =>
+            {
+                try
+                {
+                    action();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error: {ex}");
+                    _dialogService.DisplayPromptAsync("Error", ex.ToString(), "Ok");
+                }
+                finally
+                {
+                    CurrentSyncState = SyncState.Error;
+                    CurrentState = ViewModelState.Normal;
+                }
+            }, CancellationToken.None, TaskCreationOptions.None, TaskScheduler.Current);
+        }
+
     }
 }

@@ -20,5 +20,11 @@ namespace ContactsApp.Services
             var page = GetCurrentPage();
             return await page.DisplayAlert(title, message, accept, cancel);
         }
+
+        public Task DisplayPromptAsync(string title, string message, string accept = "Ok")
+        {
+            var page = GetCurrentPage();
+            return page.DisplayAlert(title, message, accept);
+        }
     }
 }

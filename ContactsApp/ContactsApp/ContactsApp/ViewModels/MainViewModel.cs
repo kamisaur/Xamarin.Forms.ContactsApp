@@ -3,6 +3,7 @@ using ContactsApp.Models;
 using ContactsApp.Services;
 using ContactsApp.Utils;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
@@ -159,25 +160,12 @@ namespace ContactsApp.ViewModels
             RunInBackground(async () => await InitializeContacts());
         }
 
-        private async Task InitializeSyncInfo()
+        /// <summary>
+        /// Converts ContactModel collection into ItemViewModels. Updates Contacts and State properties.
+        /// </summary>
+        /// <param name="contactModels">Items to convert.</param>
+        private void UpdateContacts(List<ContactModel> contactModels)
         {
-            var syncInfo = await _contactsRepo.GetSyncInfo();
-            if (syncInfo != null)
-            {
-                if (syncInfo.SyncDateTime == DateTime.MinValue)
-                {
-                    LastSyncDateString = notAvailableString;
-                }
-                else
-                {
-                    LastSyncDateString = syncInfo.SyncDateTime.ToString(dateTimeFormat);
-                }
-            }
-        }
-
-        private async Task InitializeContacts()
-        {
-            var contactModels = await _contactsRepo.GetContacts();
             var contactIvms = contactModels
                 .Select(x => new ContactItemViewModel(x))
                 .OrderBy(x => x.FirstName);
@@ -194,6 +182,38 @@ namespace ContactsApp.ViewModels
             CurrentSyncState = SyncState.Completed;
         }
 
+        /// <summary>
+        /// Sets initial value to LastSyncDateString based on data in db.
+        /// </summary>
+        private async Task InitializeSyncInfo()
+        {
+            var syncInfo = await _contactsRepo.GetSyncInfo();
+            if (syncInfo != null)
+            {
+                if (syncInfo.SyncDateTime == DateTime.MinValue)
+                {
+                    LastSyncDateString = notAvailableString;
+                }
+                else
+                {
+                    LastSyncDateString = syncInfo.SyncDateTime.ToString(dateTimeFormat);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Retrieves existing contacts from repository and updates the current state. 
+        /// </summary>
+        private async Task InitializeContacts()
+        {
+            var contactModels = await _contactsRepo.GetContacts();
+            UpdateContacts(contactModels);
+        }
+
+        /// <summary>
+        /// Synchronizes contacts. Prompts user to confirm sync and checks the permission status
+        /// before permorming sync.
+        /// </summary>
         private async void SyncContatcts()
         {
             if (IsBusy)
@@ -228,19 +248,11 @@ namespace ContactsApp.ViewModels
             IsBusy = false;
         }
 
+
         private async Task UpdateContacts()
         {
             var contacts = await _contactsRepo.SyncContacts();
-            var contactIvms = contacts
-                .Select(x => new ContactItemViewModel(x))
-                .OrderBy(x => x.FirstName);
-
-            if (contactIvms.Any())
-            {
-                Contacts = new ObservableCollection<ContactItemViewModel>(contactIvms);
-            }
-
-            CurrentSyncState = SyncState.Completed;
+            UpdateContacts(contacts);
         }
 
         private async Task UpdateSyncInfo()
@@ -295,6 +307,10 @@ namespace ContactsApp.ViewModels
             });
         }
 
+        /// <summary>
+        /// Helper method to run task compatible with unit tests.
+        /// </summary>
+        /// <param name="action">Action to be performed in the Task</param>
         public Task RunInBackground(Action action)
         {
             return Task.Factory.StartNew(() =>

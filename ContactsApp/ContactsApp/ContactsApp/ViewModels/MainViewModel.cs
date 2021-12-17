@@ -152,39 +152,38 @@ namespace ContactsApp.ViewModels
             _dialogService = dialogService;
 
             InitCommands();
+            RunInBackground(async () => await InitializeData());
+        }
 
-            Task.Run(async () =>
+        private async Task InitializeData()
+        {
+            var syncInfo = await _contactsRepo.GetSyncInfo();
+            if (syncInfo != null)
             {
-                CurrentState = ViewModelState.Normal;
-                CurrentSyncState = SyncState.Loading;
-
-                var syncInfo = await _contactsRepo.GetSyncInfo();
-                if(syncInfo != null)
+                if (syncInfo.SyncDateTime == DateTime.MinValue)
                 {
-                    if(syncInfo.SyncDateTime == DateTime.MinValue)
-                    {
-                        LastSyncDateString = "N/A";
-                    }
-                    else
-                    {
-                        LastSyncDateString = syncInfo.SyncDateTime.ToString(dateTimeFormat);
-                    }
-                }
-
-                var contactModels = await _contactsRepo.GetContacts();
-                var contactIvms = contactModels.Select(x => new ContactItemViewModel(x));
-
-                if (contactIvms.Any())
-                {
-                    Contacts = new ObservableCollection<ContactItemViewModel>(contactIvms);
+                    LastSyncDateString = "N/A";
                 }
                 else
                 {
-                    CurrentState = ViewModelState.Empty;
+                    LastSyncDateString = syncInfo.SyncDateTime.ToString(dateTimeFormat);
                 }
+            }
 
-                CurrentSyncState = SyncState.Completed;
-            });
+            var contactModels = await _contactsRepo.GetContacts();
+            var contactIvms = contactModels.Select(x => new ContactItemViewModel(x));
+
+            if (contactIvms.Any())
+            {
+                Contacts = new ObservableCollection<ContactItemViewModel>(contactIvms);
+            }
+            else
+            {
+                CurrentState = ViewModelState.Empty;
+            }
+
+            CurrentSyncState = SyncState.Completed;
+
         }
 
         public async void SyncContatctsAsync()
@@ -239,11 +238,8 @@ namespace ContactsApp.ViewModels
 
         public void ClearCacheAsync()
         {
-            Task.Run(async () =>
+            RunInBackground(async () =>
             {
-                CurrentSyncState = SyncState.Loading;
-                CurrentState = ViewModelState.Normal;
-
                 Contacts.Clear();
                 await _contactsRepo.DeleteAllContactsAsync();
 
@@ -279,8 +275,10 @@ namespace ContactsApp.ViewModels
 
         public void HandleErrorState()
         {
-            CurrentState = ViewModelState.Normal;
-            CurrentSyncState = SyncState.Error;
+            RunInBackground(() =>
+            {
+                throw new NotImplementedException("Something went wrong:(");
+            });
         }
 
         public Task RunInBackground(Action action)
@@ -289,20 +287,21 @@ namespace ContactsApp.ViewModels
             {
                 try
                 {
+                    CurrentSyncState = SyncState.Loading;
+                    CurrentState = ViewModelState.Normal;
+
                     action();
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Error: {ex}");
-                    _dialogService.DisplayPromptAsync("Error", ex.ToString(), "Ok");
+                    CurrentSyncState = SyncState.Error;
                 }
                 finally
                 {
-                    CurrentSyncState = SyncState.Error;
                     CurrentState = ViewModelState.Normal;
                 }
             }, CancellationToken.None, TaskCreationOptions.None, TaskScheduler.Current);
         }
-
     }
 }

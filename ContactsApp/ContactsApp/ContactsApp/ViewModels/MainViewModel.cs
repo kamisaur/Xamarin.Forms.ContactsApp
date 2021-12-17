@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using Xamarin.Essentials;
 using Xamarin.Forms;
 
 namespace ContactsApp.ViewModels
@@ -46,6 +47,28 @@ namespace ContactsApp.ViewModels
             set
             {
                 _syncContactsCommand = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private ICommand _requestPermissionCommand;
+        public ICommand RequestPermissionCommand
+        {
+            get => _requestPermissionCommand;
+            set
+            {
+                _requestPermissionCommand = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private ICommand _goBackToContactsCommand;
+        public ICommand GoBackToContactsCommand
+        {
+            get => _goBackToContactsCommand;
+            set
+            {
+                _goBackToContactsCommand = value;
                 OnPropertyChanged();
             }
         }
@@ -90,18 +113,13 @@ namespace ContactsApp.ViewModels
 
             SyncContactsCommand = new Command(() => SyncContatctsAsync());
             ClearCacheCommand = new Command(() => ClearCacheAsync());
+            RequestPermissionCommand = new Command(() => RequestPermission());
+            GoBackToContactsCommand = new Command(() => GoBackToContacts());
 
             Task.Run(async () =>
             {
+                CurrentState = ViewModelState.Normal;
                 IsLoading = true;
-                CurrentState = ViewModelState.Loading;
-
-                var permissionStatus = await _permissionService.HandleContactsPermission();
-                if (!permissionStatus)
-                {
-                    CurrentState = ViewModelState.PermissionDenied;
-                    return;
-                }
 
                 var contactModels = await _contactsRepo.GetContacts();
                 var contactIvms = contactModels.Select(x => new ContactItemViewModel(x));
@@ -109,7 +127,6 @@ namespace ContactsApp.ViewModels
                 if (contactIvms.Any())
                 {
                     Contacts = new ObservableCollection<ContactItemViewModel>(contactIvms);
-                    CurrentState = ViewModelState.Normal;
                 }
                 else
                 {
@@ -125,7 +142,15 @@ namespace ContactsApp.ViewModels
             Task.Run(async () =>
             {
                 IsLoading = true;
-                CurrentState = ViewModelState.Loading;
+                CurrentState = ViewModelState.Normal;
+
+                var permissionStatus = await _permissionService.GetContactsPermissionStatusAsync();
+                if (permissionStatus != PermissionStatus.Granted)
+                {
+                    CurrentState = ViewModelState.PermissionDenied;
+                    IsLoading = false;
+                    return;
+                }
 
                 var contacts = await _contactsRepo.SyncContacts();
                 var contactIvms = contacts.Select(x => new ContactItemViewModel(x));
@@ -135,7 +160,6 @@ namespace ContactsApp.ViewModels
                 }
 
                 IsLoading = false;
-                CurrentState = ViewModelState.Normal;
             });
         }
 
@@ -144,7 +168,7 @@ namespace ContactsApp.ViewModels
             Task.Run(async () =>
             {
                 IsLoading = true;
-                CurrentState = ViewModelState.Loading;
+                CurrentState = ViewModelState.Normal;
 
                 Contacts.Clear();
                 await _contactsRepo.DeleteAllContactsAsync();
@@ -152,6 +176,31 @@ namespace ContactsApp.ViewModels
                 IsLoading = false;
                 CurrentState = ViewModelState.Empty;
             });
+        }
+
+        public async void RequestPermission()
+        {
+            var permissionStatus = await _permissionService.RequestContactsPermissionAsync();
+            if(permissionStatus == PermissionStatus.Granted)
+            {
+                SyncContatctsAsync();
+            }
+            else
+            {
+                CurrentState = ViewModelState.PermissionDenied;
+            }
+        }
+
+        public void GoBackToContacts()
+        {
+            if(Contacts != null && Contacts.Any())
+            {
+                CurrentState = ViewModelState.Normal;
+            }
+            else
+            {
+                CurrentState = ViewModelState.Empty;
+            }
         }
     }
 }

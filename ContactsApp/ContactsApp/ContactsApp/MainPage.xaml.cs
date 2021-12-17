@@ -21,8 +21,11 @@ namespace ContactsApp
             var permissionService = new PermissionService();
             var contactsService = new ContactsService();
             var databaseService = new DatabaseService();
+            var dialogService = new DialogService();
             var contactsRepo = new ContactsRepository(contactsService, databaseService);
-            BindingContext = new MainViewModel(contactsRepo, permissionService);
+            var vm = new MainViewModel(contactsRepo, permissionService, dialogService);
+
+            BindingContext = vm;
         }
 
         protected override void OnAppearing()

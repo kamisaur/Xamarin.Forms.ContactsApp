@@ -148,13 +148,33 @@
             <!--#region Sync Info-->
             <StackLayout
                 Padding="16"
-                BackgroundColor="Tomato"
+                BackgroundColor="LightGreen"
                 Orientation="Horizontal"
                 Spacing="0">
-                <Label
+
+                <StackLayout
                     HorizontalOptions="FillAndExpand"
-                    Text="Sync Info"
-                    VerticalOptions="Center" />
+                    Orientation="Vertical"
+                    Spacing="0">
+
+                    <Label
+                        Text="✅ Sync Successful"
+                        TextColor="White"
+                        VerticalOptions="Center" />
+
+                    <Label
+                        HorizontalOptions="FillAndExpand"
+                        TextColor="White"
+                        VerticalOptions="Center">
+                        <Label.FormattedText>
+                            <FormattedString>
+                                <Span Text="Last sync: " />
+                                <Span Text="{Binding LastSyncDateString}" />
+                            </FormattedString>
+                        </Label.FormattedText>
+                    </Label>
+                </StackLayout>
+
                 <ActivityIndicator
                     HeightRequest="28"
                     IsRunning="{Binding IsLoading}"

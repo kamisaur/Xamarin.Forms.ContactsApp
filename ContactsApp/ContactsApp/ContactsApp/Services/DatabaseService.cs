@@ -16,6 +16,7 @@ namespace ContactsApp.Services
         {
             Database = new SQLiteAsyncConnection(Constants.DatabasePath, Constants.Flags);
             Database.CreateTableAsync<ContactModel>();
+            Database.CreateTableAsync<SyncInfoModel>();
         }
 
         public Task<List<ContactModel>> GetContactsAsync()
@@ -32,6 +33,16 @@ namespace ContactsApp.Services
         public Task<int> DeleteAllContactsAsync()
         {
             return Database.DeleteAllAsync<ContactModel>();
+        }
+
+        public Task<SyncInfoModel> GetSyncInfoAsync()
+        {
+            return Database.Table<SyncInfoModel>().FirstOrDefaultAsync();
+        }
+
+        public Task<int> SaveSyncInfoAsync(SyncInfoModel syncInfo)
+        {
+            return Database.InsertOrReplaceAsync(syncInfo);
         }
     }
 }

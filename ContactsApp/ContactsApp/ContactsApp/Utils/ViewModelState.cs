@@ -7,7 +7,6 @@ namespace ContactsApp.Utils
     public enum ViewModelState
     {
         Normal,
-        //Loading,
         Empty,
         Error,
         PermissionDenied,

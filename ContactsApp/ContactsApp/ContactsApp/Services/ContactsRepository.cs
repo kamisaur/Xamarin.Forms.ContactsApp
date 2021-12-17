@@ -37,5 +37,15 @@ namespace ContactsApp.Services
         {
              return _databaseService.DeleteAllContactsAsync();
         }
+
+        public Task<SyncInfoModel> GetSyncInfo()
+        {
+            return _databaseService.GetSyncInfoAsync();
+        }
+
+        public Task<int> SaveSyncInfoAsync(SyncInfoModel syncInfo)
+        {
+            return _databaseService.SaveSyncInfoAsync(syncInfo);
+        }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using ContactsApp.ItemViewModels;
+using ContactsApp.Models;
 using ContactsApp.Services;
 using ContactsApp.Utils;
 using System;
@@ -17,6 +18,9 @@ namespace ContactsApp.ViewModels
     {
         private readonly IContactsRepository _contactsRepo;
         private readonly IPermissionService _permissionService;
+        private readonly IDialogService _dialogService;
+
+        private const string dateTimeFormat = "MM/dd/yyyy HH:mm";
 
         private ObservableCollection<ContactItemViewModel> _contacts;
         public ObservableCollection<ContactItemViewModel> Contacts
@@ -73,13 +77,13 @@ namespace ContactsApp.ViewModels
             }
         }
 
-        private DateTime _lastSyncDate;
-        public DateTime LastSyncDate
+        private string _lastSyncDateString;
+        public string LastSyncDateString
         {
-            get => _lastSyncDate;
+            get => _lastSyncDateString;
             set
             {
-                _lastSyncDate = value;
+                _lastSyncDateString = value;
                 OnPropertyChanged();
             }
         }
@@ -106,10 +110,14 @@ namespace ContactsApp.ViewModels
             }
         }
 
-        public MainViewModel(IContactsRepository contactsRepo, IPermissionService permissionService)
+        public MainViewModel(
+            IContactsRepository contactsRepo,
+            IPermissionService permissionService,
+            IDialogService dialogService)
         {
             _contactsRepo = contactsRepo;
             _permissionService = permissionService;
+            _dialogService = dialogService;
 
             SyncContactsCommand = new Command(() => SyncContatctsAsync());
             ClearCacheCommand = new Command(() => ClearCacheAsync());
@@ -120,6 +128,12 @@ namespace ContactsApp.ViewModels
             {
                 CurrentState = ViewModelState.Normal;
                 IsLoading = true;
+
+                var syncInfo = await _contactsRepo.GetSyncInfo();
+                if(syncInfo != null)
+                {
+                    LastSyncDateString = syncInfo.SyncDateTime.ToString(dateTimeFormat);
+                }
 
                 var contactModels = await _contactsRepo.GetContacts();
                 var contactIvms = contactModels.Select(x => new ContactItemViewModel(x));
@@ -137,9 +151,20 @@ namespace ContactsApp.ViewModels
             });
         }
 
-        public void SyncContatctsAsync()
+        public async void SyncContatctsAsync()
         {
-            Task.Run(async () =>
+            var dialogResult = await _dialogService.DisplayPromptAsync(
+                "Contacts",
+                "Are you sure you want to import contacts?",
+                "Yes",
+                "No");
+
+            if (!dialogResult)
+            {
+                return;
+            }
+
+            await Task.Run(async () =>
             {
                 IsLoading = true;
                 CurrentState = ViewModelState.Normal;
@@ -153,6 +178,11 @@ namespace ContactsApp.ViewModels
                 }
 
                 var contacts = await _contactsRepo.SyncContacts();
+
+                var newSync = DateTime.Now;
+                await _contactsRepo.SaveSyncInfoAsync(new SyncInfoModel(newSync));
+                LastSyncDateString = newSync.ToString(dateTimeFormat);
+
                 var contactIvms = contacts.Select(x => new ContactItemViewModel(x));
                 if (contactIvms.Any())
                 {

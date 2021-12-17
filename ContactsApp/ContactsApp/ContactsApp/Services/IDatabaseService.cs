@@ -12,6 +12,11 @@ namespace ContactsApp.Services
 
         Task<int> UpsertContactsAsync(List<ContactModel> contactModels);
 
-        public Task<int> DeleteAllContactsAsync();
+        Task<int> DeleteAllContactsAsync();
+
+        Task<SyncInfoModel> GetSyncInfoAsync();
+
+        Task<int> SaveSyncInfoAsync(SyncInfoModel syncInfo);
+
     }
 }

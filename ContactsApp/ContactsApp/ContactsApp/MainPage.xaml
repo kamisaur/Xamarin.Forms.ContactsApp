@@ -293,13 +293,11 @@
             </ContentView>
             <!--#endregion-->
 
-            <!--#region Listing-->
             <CollectionView
                 Grid.Row="1"
                 EmptyView="{StaticResource loadingView}"
                 ItemTemplate="{StaticResource listItemTemplate}"
                 ItemsSource="{Binding Contacts}" />
-            <!--#endregion-->
         </Grid>
         <!--#endregion-->
 
@@ -315,19 +313,14 @@
                 HorizontalOptions="Center"
                 Text="🛂" />
 
-            <!--#region Text-->
             <Label Style="{StaticResource TitleLabelStyle}" Text="Permission Needed" />
-
             <Label Style="{StaticResource SubTitleLabelStyle}" Text="Please allow the app to access Contacts." />
-            <!--#endregion-->
 
-            <!--#region Button-->
             <Button
                 Margin="50,16,50,0"
                 Command="{Binding RequestPermissionCommand}"
                 Style="{StaticResource mainButtonStyle}"
                 Text="Request" />
-            <!--#endregion-->
 
             <Label
                 FontSize="12"

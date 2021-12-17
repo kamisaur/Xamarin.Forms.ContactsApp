@@ -3,10 +3,8 @@ using ContactsApp.Models;
 using ContactsApp.Services;
 using ContactsApp.Utils;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -22,6 +20,11 @@ namespace ContactsApp.ViewModels
         private readonly IDialogService _dialogService;
 
         private const string dateTimeFormat = "MM/dd/yyyy HH:mm";
+        private const string contactsString = "Contacts";
+        private const string importNoticeString = "Are you sure you want to import contacts?";
+        private const string yesString = "Yes";
+        private const string noString = "No";
+        private const string notAvailableString = "N/A";
 
         private ObservableCollection<ContactItemViewModel> _contacts;
         public ObservableCollection<ContactItemViewModel> Contacts
@@ -162,7 +165,7 @@ namespace ContactsApp.ViewModels
             {
                 if (syncInfo.SyncDateTime == DateTime.MinValue)
                 {
-                    LastSyncDateString = "N/A";
+                    LastSyncDateString = notAvailableString;
                 }
                 else
                 {
@@ -186,7 +189,7 @@ namespace ContactsApp.ViewModels
 
         }
 
-        public async void SyncContatctsAsync()
+        private async void SyncContatctsAsync()
         {
             if (IsBusy)
                 return;
@@ -194,10 +197,10 @@ namespace ContactsApp.ViewModels
             IsBusy = true;
 
             var dialogResult = await _dialogService.DisplayPromptAsync(
-                "Contacts",
-                "Are you sure you want to import contacts?",
-                "Yes",
-                "No");
+                contactsString,
+                importNoticeString,
+                yesString,
+                noString);
 
             if (!dialogResult)
             {
@@ -205,20 +208,17 @@ namespace ContactsApp.ViewModels
                 return;
             }
 
-            await Task.Run(async () =>
+            var permissionStatus = await _permissionService.GetContactsPermissionStatusAsync();
+            if (permissionStatus != PermissionStatus.Granted)
             {
-                CurrentSyncState = SyncState.Loading;
-                CurrentState = ViewModelState.Normal;
-
-                var permissionStatus = await _permissionService.GetContactsPermissionStatusAsync();
-                if (permissionStatus != PermissionStatus.Granted)
-                {
-                    CurrentState = ViewModelState.PermissionDenied;
-                    CurrentSyncState = SyncState.Completed;
-                    IsBusy = false;
-                    return;
-                }
-
+                CurrentState = ViewModelState.PermissionDenied;
+                CurrentSyncState = SyncState.Completed;
+                IsBusy = false;
+                return;
+            }
+           
+            await RunInBackground(async () =>
+            {
                 var contacts = await _contactsRepo.SyncContacts();
 
                 var newSync = DateTime.Now;
@@ -236,7 +236,7 @@ namespace ContactsApp.ViewModels
             });
         }
 
-        public void ClearCacheAsync()
+        private void ClearCacheAsync()
         {
             RunInBackground(async () =>
             {
@@ -248,7 +248,7 @@ namespace ContactsApp.ViewModels
             });
         }
 
-        public async void RequestPermission()
+        private async void RequestPermission()
         {
             var permissionStatus = await _permissionService.RequestContactsPermissionAsync();
             if(permissionStatus == PermissionStatus.Granted)
@@ -261,7 +261,7 @@ namespace ContactsApp.ViewModels
             }
         }
 
-        public void GoBackToContacts()
+        private void GoBackToContacts()
         {
             if(Contacts != null && Contacts.Any())
             {
@@ -273,7 +273,7 @@ namespace ContactsApp.ViewModels
             }
         }
 
-        public void HandleErrorState()
+        private void HandleErrorState()
         {
             RunInBackground(() =>
             {

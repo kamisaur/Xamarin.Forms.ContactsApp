@@ -1,8 +1,5 @@
 ﻿using ContactsApp.Models;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace ContactsApp.Services
@@ -38,7 +35,7 @@ namespace ContactsApp.Services
              return _databaseService.DeleteAllContactsAsync();
         }
 
-        public Task<SyncInfoModel> GetSyncInfo()
+        public Task<SyncInfoModel> GetSyncInfoAsync()
         {
             return _databaseService.GetSyncInfoAsync();
         }

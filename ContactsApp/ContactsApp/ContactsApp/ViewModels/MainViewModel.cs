@@ -187,7 +187,7 @@ namespace ContactsApp.ViewModels
         /// </summary>
         private async Task InitializeSyncInfo()
         {
-            var syncInfo = await _contactsRepo.GetSyncInfo();
+            var syncInfo = await _contactsRepo.GetSyncInfoAsync();
             if (syncInfo != null)
             {
                 if (syncInfo.SyncDateTime == DateTime.MinValue)

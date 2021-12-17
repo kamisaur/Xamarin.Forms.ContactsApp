@@ -17,7 +17,7 @@ namespace ContactsApp.Services
 
         Task DeleteAllContactsAsync();
 
-        Task<SyncInfoModel> GetSyncInfo();
+        Task<SyncInfoModel> GetSyncInfoAsync();
 
         Task<int> SaveSyncInfoAsync(SyncInfoModel syncInfo);
     }

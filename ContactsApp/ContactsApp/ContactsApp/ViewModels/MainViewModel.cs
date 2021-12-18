@@ -146,6 +146,14 @@ namespace ContactsApp.ViewModels
             ErrorCommand = new Command(() => HandleErrorState());
         }
 
+        public Task Initialize()
+        {
+            RunInBackground(async () => await InitializeSyncInfo());
+            RunInBackground(async () => await InitializeContacts());
+
+            return Task.CompletedTask;
+        }
+
         public MainViewModel(
             IContactsRepository contactsRepo,
             IPermissionService permissionService,
@@ -156,8 +164,6 @@ namespace ContactsApp.ViewModels
             _dialogService = dialogService;
 
             InitCommands();
-            RunInBackground(async () => await InitializeSyncInfo());
-            RunInBackground(async () => await InitializeContacts());
         }
 
         /// <summary>
@@ -166,6 +172,9 @@ namespace ContactsApp.ViewModels
         /// <param name="contactModels">Items to convert.</param>
         private void UpdateContacts(List<ContactModel> contactModels)
         {
+            if (contactModels == null)
+                return;
+
             var contactIvms = contactModels
                 .Select(x => new ContactItemViewModel(x))
                 .OrderBy(x => x.FirstName);
@@ -214,13 +223,31 @@ namespace ContactsApp.ViewModels
         /// Synchronizes contacts. Prompts user to confirm sync and checks the permission status
         /// before permorming sync.
         /// </summary>
-        private async void SyncContatcts()
+        private async void SyncContatcts(bool skipPrompts = false)
         {
             if (IsBusy)
                 return;
 
             IsBusy = true;
 
+            if (!skipPrompts)
+            {
+                var canSync = await CanSyncContacts();
+                if (!canSync)
+                {
+                    IsBusy = false;
+                    return;
+                }
+            }
+
+            await RunInBackground(async () => await UpdateContacts());
+            await RunInBackground(async () => await UpdateSyncInfo());
+
+            IsBusy = false;
+        }
+
+        private async Task<bool> CanSyncContacts()
+        {
             var dialogResult = await _dialogService.DisplayPromptAsync(
                 contactsString,
                 importNoticeString,
@@ -229,8 +256,7 @@ namespace ContactsApp.ViewModels
 
             if (!dialogResult)
             {
-                IsBusy = false;
-                return;
+                return false;
             }
 
             var permissionStatus = await _permissionService.GetContactsPermissionStatusAsync();
@@ -238,16 +264,11 @@ namespace ContactsApp.ViewModels
             {
                 CurrentState = ViewModelState.PermissionDenied;
                 CurrentSyncState = SyncState.Completed;
-                IsBusy = false;
-                return;
+                return false;
             }
-           
-            await RunInBackground(async () => await UpdateContacts());
-            await RunInBackground(async () => await UpdateSyncInfo());
 
-            IsBusy = false;
+            return true;
         }
-
 
         private async Task UpdateContacts()
         {
@@ -279,7 +300,7 @@ namespace ContactsApp.ViewModels
             var permissionStatus = await _permissionService.RequestContactsPermissionAsync();
             if(permissionStatus == PermissionStatus.Granted)
             {
-                SyncContatcts();
+                SyncContatcts(skipPrompts: true);
             }
             else
             {
@@ -329,7 +350,6 @@ namespace ContactsApp.ViewModels
                 }
                 finally
                 {
-                    CurrentState = ViewModelState.Normal;
                     IsBusy = false;
                 }
             }, CancellationToken.None, TaskCreationOptions.None, TaskScheduler.Current);

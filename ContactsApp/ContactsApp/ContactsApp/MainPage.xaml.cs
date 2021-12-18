@@ -24,7 +24,7 @@ namespace ContactsApp
             var dialogService = new DialogService();
             var contactsRepo = new ContactsRepository(contactsService, databaseService);
             var vm = new MainViewModel(contactsRepo, permissionService, dialogService);
-
+            vm.Initialize();
             BindingContext = vm;
         }
 

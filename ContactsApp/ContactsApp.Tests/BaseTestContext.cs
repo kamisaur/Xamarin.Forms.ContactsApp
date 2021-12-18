@@ -19,9 +19,9 @@ namespace ContactsApp.Tests
         /// (rather than Task.Run).
         /// </summary>
         /// <param name="action">Action to execute.</param>
-        protected void RunInSingleThread(Action action)
+        protected Task RunInSingleThread(Action action)
         {
-            Task.Factory.StartNew(() =>
+            return Task.Factory.StartNew(() =>
             {
                 action();
             }, CancellationToken.None, TaskCreationOptions.None, SynchronousTaskScheduler);

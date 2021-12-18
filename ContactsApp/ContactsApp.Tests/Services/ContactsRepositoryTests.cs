@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 namespace ContactsApp.Tests.Services
 {
     [TestFixture]
-    public class ContactsRepositoryTests
+    public class ContactsRepositoryTests : BaseTestContext
     {
         [Test]
         public void GetContacts_CallDatabaseService_RecievesOneCall()
@@ -206,6 +206,67 @@ namespace ContactsApp.Tests.Services
 
             // Assert
             quantity.Should().Be(taskResult);
+        }
+
+        [Test]
+        public async Task SyncContacts_NoItemsToSync_RecievesNull()
+        {
+            // Arrange
+            var databaseService = Substitute.For<IDatabaseService>();
+            var contactsService = Substitute.For<IContactsService>();
+
+            var deleteTaskResult = Task.FromResult(0);
+            databaseService.DeleteAllContactsAsync().Returns(deleteTaskResult);
+
+            var contactsList = new List<ContactModel>();
+            var contactsResult = Task.FromResult(contactsList);
+            contactsService.GetAllContactsAsync().Returns(contactsResult);
+
+            databaseService.UpsertContactsAsync(contactsList).Returns(0);
+
+            var fixture = new Fixture();
+            fixture.Register<IDatabaseService>(() => databaseService);
+            fixture.Register<IContactsService>(() => contactsService);
+            var cUT = fixture.Build<ContactsRepository>().OmitAutoProperties().Create();
+
+            // Act
+            var contacts = await cUT.SyncContacts();
+
+            // Assert
+            contacts.Should().BeEquivalentTo(contactsList);
+        }
+
+        [Test]
+        public async Task SyncContacts_ItemsToSync_RecievesItems()
+        {
+            // Arrange
+            var databaseService = Substitute.For<IDatabaseService>();
+            var contactsService = Substitute.For<IContactsService>();
+
+            var deleteTaskResult = Task.FromResult(0);
+            databaseService.DeleteAllContactsAsync().Returns(deleteTaskResult);
+
+            var contactsList = new List<ContactModel>
+            {
+                new ContactModel("0", "Jack", "Black", "111222333"),
+                new ContactModel("1", "Anthony", "Bright", "222333444"),
+                new ContactModel("2", "Mark", "Anthony", "333444555"),
+            };
+            var contactsResult = Task.FromResult(contactsList);
+            contactsService.GetAllContactsAsync().Returns(contactsResult);
+
+            databaseService.UpsertContactsAsync(contactsList).Returns(0);
+
+            var fixture = new Fixture();
+            fixture.Register<IDatabaseService>(() => databaseService);
+            fixture.Register<IContactsService>(() => contactsService);
+            var cUT = fixture.Build<ContactsRepository>().OmitAutoProperties().Create();
+
+            // Act
+            var contacts = await cUT.SyncContacts();
+
+            // Assert
+            contacts.Should().BeEquivalentTo(contactsList);
         }
     }
 }

@@ -257,7 +257,7 @@ namespace ContactsApp.Tests.ViewModels
             var permissionService = Substitute.For<IPermissionService>();
             var dialogService = Substitute.For<IDialogService>();
 
-            permissionService.RequestContactsPermissionAsync().Returns(PermissionStatus.Granted);
+            permissionService.RequestContactsPermissionAsync().Returns(PermissionStatus.Denied);
 
             var fixture = new Fixture();
             fixture.Register<IContactsRepository>(() => databaseService);

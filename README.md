@@ -44,3 +44,8 @@ For ease of testsing there are toolbar buttons added to main page which can be u
     </tr>
   </table>
 </html>
+
+# Unit Tests
+Solution includes unit tests project which covers:
+- ContactsRepository
+- MainViewModel

@@ -291,7 +291,7 @@ namespace ContactsApp.ViewModels
                 await _contactsRepo.DeleteAllContactsAsync();
             });
 
-            Contacts.Clear();
+            Contacts?.Clear();
             CurrentSyncState = SyncState.Completed;
             CurrentState = ViewModelState.Empty;
 

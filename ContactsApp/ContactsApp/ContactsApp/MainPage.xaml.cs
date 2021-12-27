@@ -7,7 +7,6 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Xamarin.Essentials;
 using Xamarin.Forms;
 
 namespace ContactsApp
@@ -19,7 +18,7 @@ namespace ContactsApp
             InitializeComponent();
 
             var permissionService = DependencyService.Get<IPermissionService>();
-            var contactsService = new ContactsService();
+            var contactsService = DependencyService.Get<IContactsService>();
             var databaseService = new DatabaseService();
             var dialogService = new DialogService();
             var contactsRepo = new ContactsRepository(contactsService, databaseService);

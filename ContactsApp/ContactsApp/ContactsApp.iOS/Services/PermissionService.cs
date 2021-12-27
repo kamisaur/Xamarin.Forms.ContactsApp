@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AddressBook;
+using ContactsApp.iOS.Services;
 using ContactsApp.Services;
+using ContactsApp.Utils;
 using Foundation;
-using Xamarin.Essentials;
 using Xamarin.Forms;
 
 [assembly: Dependency(typeof(PermissionService))]
@@ -98,10 +99,14 @@ namespace ContactsApp.iOS.Services
             return tcs.Task;
         }
 
+
+        private bool PlatformIsMainThread =>
+            NSThread.Current.IsMainThread;
+
         internal void EnsureMainThread()
         {
-            if (!MainThread.IsMainThread)
-                throw new PermissionException("Permission request must be invoked on main thread.");
+            if (!PlatformIsMainThread)
+                throw new Exception("Permission request must be invoked on main thread.");
         }
 
         public void EnsureDeclared()
@@ -117,7 +122,7 @@ namespace ContactsApp.iOS.Services
             foreach (var requiredInfoPlistKey in plistKeys)
             {
                 if (!IsKeyDeclaredInInfoPlist(requiredInfoPlistKey))
-                    throw new PermissionException($"You must set `{requiredInfoPlistKey}` in your Info.plist file to use the Permission: {GetType().Name}.");
+                    throw new Exception($"You must set `{requiredInfoPlistKey}` in your Info.plist file to use the Permission: {GetType().Name}.");
             }
         }
 

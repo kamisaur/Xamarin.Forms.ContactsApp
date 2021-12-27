@@ -9,7 +9,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
-using Xamarin.Essentials;
 using Xamarin.Forms;
 
 namespace ContactsApp.ViewModels
@@ -189,6 +188,8 @@ namespace ContactsApp.ViewModels
             }
 
             CurrentSyncState = SyncState.Completed;
+            CurrentState = ViewModelState.Normal;
+            IsBusy = false;
         }
 
         /// <summary>
@@ -283,16 +284,17 @@ namespace ContactsApp.ViewModels
             LastSyncDateString = newSync.ToString(dateTimeFormat);
         }
 
-        private void ClearCacheAsync()
+        private async void ClearCacheAsync()
         {
-            RunInBackground(async () =>
+            await RunInBackground(async () =>
             {
-                Contacts.Clear();
                 await _contactsRepo.DeleteAllContactsAsync();
-
-                CurrentSyncState = SyncState.Completed;
-                CurrentState = ViewModelState.Empty;
             });
+
+            Contacts.Clear();
+            CurrentSyncState = SyncState.Completed;
+            CurrentState = ViewModelState.Empty;
+
         }
 
         private async void RequestPermission()

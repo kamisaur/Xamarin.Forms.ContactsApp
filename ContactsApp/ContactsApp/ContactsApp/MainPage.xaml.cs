@@ -18,7 +18,7 @@ namespace ContactsApp
         {
             InitializeComponent();
 
-            var permissionService = new PermissionService();
+            var permissionService = DependencyService.Get<IPermissionService>();
             var contactsService = new ContactsService();
             var databaseService = new DatabaseService();
             var dialogService = new DialogService();

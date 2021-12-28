@@ -8,6 +8,6 @@ namespace ContactsApp.Services
 {
     public interface IContactsService
     {
-        Task<List<ContactModel>> GetAllContactsAsync();
+        Task<List<Contact>> GetAllContactsAsync();
     }
 }

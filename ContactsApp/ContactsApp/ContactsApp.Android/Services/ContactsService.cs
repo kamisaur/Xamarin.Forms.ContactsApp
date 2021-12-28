@@ -29,39 +29,10 @@ namespace ContactsApp.Droid.Services
             MainActivity.Context.ContentResolver;
 
 
-        public async Task<List<ContactModel>> GetAllContactsAsync()
+        public async Task<List<Contact>> GetAllContactsAsync()
         {
-            try
-            {
-                var contacts = await PlatformGetAllAsync();
-                var contactModels = new List<ContactModel>();
-                contactModels = contactModels ?? new List<ContactModel>();
-
-                foreach (var contact in contacts)
-                {
-                    var phoneNumber = GetPhoneNumber(contact.Phones);
-                    contactModels.Add(new ContactModel(
-                        contact.Id,
-                        contact.GivenName,
-                        contact.FamilyName,
-                        phoneNumber));
-                }
-
-                return contactModels;
-            }
-            catch (Exception ex)
-            {
-                throw;
-            }
-        }
-
-        private string GetPhoneNumber(List<ContactPhone> contactPhones)
-        {
-            var phoneNumber = contactPhones != null && contactPhones.Any()
-                    ? contactPhones.First().PhoneNumber
-                    : string.Empty;
-
-            return phoneNumber;
+            var contacts = await PlatformGetAllAsync();
+            return contacts.ToList();
         }
 
         static Task<IEnumerable<Contact>> PlatformGetAllAsync(CancellationToken cancellationToken = default)

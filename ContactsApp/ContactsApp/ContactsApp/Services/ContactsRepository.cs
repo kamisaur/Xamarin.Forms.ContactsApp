@@ -1,5 +1,6 @@
 ﻿using ContactsApp.Models;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace ContactsApp.Services
@@ -25,9 +26,33 @@ namespace ContactsApp.Services
         {
             await DeleteAllContactsAsync();
             var contacts = await _contactsService.GetAllContactsAsync();
-            await _databaseService.UpsertContactsAsync(contacts);
+            var contactModels = contacts
+                .Select(x => ConvertToContactModel(x))
+                .ToList();
 
-            return contacts;
+            await _databaseService.UpsertContactsAsync(contactModels);
+
+            return contactModels;
+        }
+
+        private ContactModel ConvertToContactModel(Contact contact)
+        {
+            var phoneNumber = GetPhoneNumber(contact.Phones);
+
+            return new ContactModel(
+                contact.Id,
+                contact.GivenName,
+                contact.FamilyName,
+                phoneNumber);
+        }
+
+        private string GetPhoneNumber(List<ContactPhone> contactPhones)
+        {
+            var phoneNumber = contactPhones != null && contactPhones.Any()
+                    ? contactPhones.First().PhoneNumber
+                    : string.Empty;
+
+            return phoneNumber;
         }
 
         public Task DeleteAllContactsAsync()

@@ -181,6 +181,7 @@ namespace ContactsApp.ViewModels
             if (contactIvms.Any())
             {
                 Contacts = new ObservableCollection<ContactItemViewModel>(contactIvms);
+                CurrentState = ViewModelState.Normal;
             }
             else
             {
@@ -188,8 +189,6 @@ namespace ContactsApp.ViewModels
             }
 
             CurrentSyncState = SyncState.Completed;
-            CurrentState = ViewModelState.Normal;
-            IsBusy = false;
         }
 
         /// <summary>
@@ -241,8 +240,11 @@ namespace ContactsApp.ViewModels
                 }
             }
 
-            await RunInBackground(async () => await UpdateContacts());
-            await RunInBackground(async () => await UpdateSyncInfo());
+            await RunInBackground(async () =>
+            {
+                await UpdateContacts();
+                await UpdateSyncInfo();
+            });
 
             IsBusy = false;
         }
@@ -294,7 +296,6 @@ namespace ContactsApp.ViewModels
             Contacts?.Clear();
             CurrentSyncState = SyncState.Completed;
             CurrentState = ViewModelState.Empty;
-
         }
 
         private async void RequestPermission()

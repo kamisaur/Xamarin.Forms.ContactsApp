@@ -219,8 +219,10 @@ namespace ContactsApp.Tests.Services
             databaseService.DeleteAllContactsAsync().Returns(deleteTaskResult);
 
             var contactsList = new List<ContactModel>();
-            var contactsResult = Task.FromResult(contactsList);
-            contactsService.GetAllContactsAsync().Returns(contactsResult);
+            var contactsRaw = new List<Contact>();
+            //var contactsResult = Task.FromResult(contactsList);
+            //var contactsRawResult = Task.FromResult(contactsRaw);
+            contactsService.GetAllContactsAsync().Returns(contactsRaw);
 
             databaseService.UpsertContactsAsync(contactsList).Returns(0);
 
@@ -250,10 +252,16 @@ namespace ContactsApp.Tests.Services
             {
                 new ContactModel("0", "Jack", "Black", "111222333"),
                 new ContactModel("1", "Anthony", "Bright", "222333444"),
-                new ContactModel("2", "Mark", "Anthony", "333444555"),
             };
+
+            var contactsRaw = new List<Contact>
+            {
+                new Contact { Id = "0", GivenName = "Jack", FamilyName = "Black", Phones = new List<ContactPhone>{ new ContactPhone("111222333") } },
+                new Contact { Id = "1", GivenName = "Anthony", FamilyName = "Bright", Phones = new List<ContactPhone>{ new ContactPhone("222333444") } },
+            };
+
             var contactsResult = Task.FromResult(contactsList);
-            contactsService.GetAllContactsAsync().Returns(contactsResult);
+            contactsService.GetAllContactsAsync().Returns(contactsRaw);
 
             databaseService.UpsertContactsAsync(contactsList).Returns(0);
 

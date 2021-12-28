@@ -9,7 +9,7 @@ namespace ContactsApp.Services
     public interface IPermissionService
     {
         Task<PermissionStatus> GetContactsPermissionStatusAsync();
+
         Task<PermissionStatus> RequestContactsPermissionAsync();
-        Task<bool> HandleContactsPermission();
     }
 }

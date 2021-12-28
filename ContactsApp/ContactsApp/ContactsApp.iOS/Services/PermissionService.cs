@@ -18,41 +18,6 @@ namespace ContactsApp.iOS.Services
             return Task.FromResult(GetAddressBookPermissionStatus());
         }
 
-        public async Task<bool> HandleContactsPermission()
-        {
-            var status = await GetContactsPermissionStatusAsync();
-            if (status == PermissionStatus.Granted)
-            {
-                return true;
-            }
-            else if (status == PermissionStatus.Denied)
-            {
-                var requestStatus = await RequestContactsPermissionAsync();
-                if (requestStatus == PermissionStatus.Granted)
-                {
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-        protected Func<IEnumerable<string>> RequiredInfoPlistKeys =>
-            () => new string[] { "NSContactsUsageDescription" };
-
-        public Task<PermissionStatus> CheckStatusAsync()
-        {
-            EnsureDeclared();
-
-            return Task.FromResult(GetAddressBookPermissionStatus());
-        }
-
         public Task<PermissionStatus> RequestContactsPermissionAsync()
         {
             EnsureDeclared();
@@ -66,7 +31,10 @@ namespace ContactsApp.iOS.Services
             return RequestAddressBookPermission();
         }
 
-        internal static PermissionStatus GetAddressBookPermissionStatus()
+        private Func<IEnumerable<string>> RequiredInfoPlistKeys =>
+            () => new string[] { "NSContactsUsageDescription" };
+
+        private PermissionStatus GetAddressBookPermissionStatus()
         {
             var status = ABAddressBook.GetAuthorizationStatus();
             return status switch
@@ -78,7 +46,7 @@ namespace ContactsApp.iOS.Services
             };
         }
 
-        internal static Task<PermissionStatus> RequestAddressBookPermission()
+        private Task<PermissionStatus> RequestAddressBookPermission()
         {
             var addressBook = ABAddressBook.Create(out var createError);
 
@@ -99,17 +67,16 @@ namespace ContactsApp.iOS.Services
             return tcs.Task;
         }
 
-
         private bool PlatformIsMainThread =>
             NSThread.Current.IsMainThread;
 
-        internal void EnsureMainThread()
+        private void EnsureMainThread()
         {
             if (!PlatformIsMainThread)
                 throw new Exception("Permission request must be invoked on main thread.");
         }
 
-        public void EnsureDeclared()
+        private void EnsureDeclared()
         {
             if (RequiredInfoPlistKeys == null)
                 return;
@@ -126,7 +93,7 @@ namespace ContactsApp.iOS.Services
             }
         }
 
-        public static bool IsKeyDeclaredInInfoPlist(string usageKey) =>
+        private bool IsKeyDeclaredInInfoPlist(string usageKey) =>
             NSBundle.MainBundle.InfoDictionary.ContainsKey(new NSString(usageKey));
     }
 }

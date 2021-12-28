@@ -19,13 +19,38 @@ namespace ContactsApp.Droid.Services
 {
 	public class PermissionService : IPermissionService
 	{
-        static readonly object locker = new object();
+        private static readonly object locker = new object();
 
-        static int requestCode;
+        private int requestCode;
 
         private const int requestCodeStart = 12000;
 
         private int nextRequestCode = requestCodeStart;
+
+        private bool IsMainThread
+        {
+            get
+            {
+                if (HasApiLevel(BuildVersionCodes.M))
+                    return Looper.MainLooper.IsCurrentThread;
+
+                return Looper.MyLooper() == Looper.MainLooper;
+            }
+        }
+
+        private int? sdkInt;
+
+        public (string androidPermission, bool isRuntime)[] RequiredPermissions =>
+            new (string, bool)[] { (Manifest.Permission.ReadContacts, true) };
+
+        private static readonly Dictionary<string, (int requestCode, TaskCompletionSource<PermissionStatus> tcs)> requests =
+               new Dictionary<string, (int, TaskCompletionSource<PermissionStatus>)>();
+
+        private int SdkInt
+            => sdkInt ??= (int)Build.VERSION.SdkInt;
+
+        private bool HasApiLevel(BuildVersionCodes versionCode) =>
+            SdkInt >= (int)versionCode;
 
         private int NextRequestCode()
         {
@@ -34,9 +59,6 @@ namespace ContactsApp.Droid.Services
 
             return nextRequestCode;
         }
-
-        public (string androidPermission, bool isRuntime)[] RequiredPermissions =>
-            new (string, bool)[] { (Manifest.Permission.ReadContacts, true) };
 
         public Task<PermissionStatus> GetContactsPermissionStatusAsync()
         {
@@ -53,37 +75,7 @@ namespace ContactsApp.Droid.Services
             }
         }
 
-
-        static readonly Dictionary<string, (int requestCode, TaskCompletionSource<PermissionStatus> tcs)> requests =
-               new Dictionary<string, (int, TaskCompletionSource<PermissionStatus>)>();
-
-
-        public async Task<bool> HandleContactsPermission()
-        {
-            var status = await GetContactsPermissionStatusAsync();
-            if (status == PermissionStatus.Granted)
-            {
-                return true;
-            }
-            else if (status == PermissionStatus.Denied)
-            {
-                var requestStatus = await RequestContactsPermissionAsync();
-                if (requestStatus == PermissionStatus.Granted)
-                {
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-        internal static void OnRequestPermissionsResult(int requestCode, string[] permissions, Android.Content.PM.Permission[] grantResults)
+        public static void OnRequestPermissionsResult(int requestCode, string[] permissions, Android.Content.PM.Permission[] grantResults)
         {
             lock (locker)
             {
@@ -154,26 +146,6 @@ namespace ContactsApp.Droid.Services
 
             return result;
         }
-
-
-        private bool IsMainThread
-        {
-            get
-            {
-                if (HasApiLevel(BuildVersionCodes.M))
-                    return Looper.MainLooper.IsCurrentThread;
-
-                return Looper.MyLooper() == Looper.MainLooper;
-            }
-        }
-
-        private int? sdkInt;
-
-        private int SdkInt
-            => sdkInt ??= (int)Build.VERSION.SdkInt;
-
-        private bool HasApiLevel(BuildVersionCodes versionCode) =>
-            SdkInt >= (int)versionCode;
 
     }
 }
